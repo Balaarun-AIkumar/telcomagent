@@ -1,0 +1,7 @@
+{"question": "How many active customers in 02139?", "sql": "SELECT COUNT(*) FROM canon_customer WHERE status='active' AND service_zip='02139'"}
+{"question": "How many customers in 02140?", "sql": "SELECT COUNT(*) FROM canon_customer WHERE service_zip='02140'"}
+{"question": "How many suspended customers?", "sql": "SELECT COUNT(*) FROM canon_customer WHERE status='suspended'"}
+{"question": "Which devices are model HGW-2400?", "sql": "SELECT cpe_sn, customer_id, firmware FROM canon_resource WHERE model='HGW-2400'"}
+{"question": "How many devices per model?", "sql": "SELECT model, COUNT(*) FROM canon_resource GROUP BY model ORDER BY model"}
+{"question": "List devices on PON-01-01", "sql": "SELECT cpe_sn, customer_id FROM canon_resource WHERE pon_port_id='PON-01-01'"}
+{"question": "List open work orders", "sql": "SELECT work_order_id, customer_id, state FROM canon_work_order WHERE state IN ('DISPATCHED','IN_PROGRESS')"}

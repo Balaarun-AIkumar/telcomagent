@@ -1,0 +1,29 @@
+receivers:
+  otlp:
+    protocols: {http: {endpoint: 0.0.0.0:4318}, grpc: {endpoint: 0.0.0.0:4317}}
+processors:
+  redaction:
+    allow_all_keys: true
+    blocked_values:
+      - "(?i)(psk|passphrase|password)\\s*[:=]\\s*\\S+"
+      - "CANARY-[A-Z0-9]{12}"
+  tail_sampling:
+    policies:
+      - {name: keep-policy-events, type: string_attribute,
+         string_attribute: {key: switchboard.policy.decision, values: [deny, step_up, break_glass]}}
+      - {name: keep-errors, type: status_code, status_code: {status_codes: [ERROR]}}
+      - {name: baseline, type: probabilistic, probabilistic: {sampling_percentage: 20}}
+  batch: {}
+exporters:
+  otlphttp/langfuse:
+    endpoint: ${env:LANGFUSE_OTLP_ENDPOINT}
+    headers: {Authorization: "Basic ${env:LANGFUSE_BASIC_AUTH}"}
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls: {insecure: true}
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [redaction, tail_sampling, batch]
+      exporters: [otlphttp/langfuse, otlp/jaeger]

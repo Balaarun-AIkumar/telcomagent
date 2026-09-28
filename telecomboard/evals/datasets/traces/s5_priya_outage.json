@@ -1,0 +1,44 @@
+{
+  "trace_id": "4602bc099615fdd936f318d848a8a7b5",
+  "user": "priya",
+  "input": "Subscribers report no internet at 14 Elm St. What's going on?",
+  "prompt_version": "a7164d915cb5",
+  "expected_decisions": [
+    [
+      "read",
+      "document:*",
+      "allow"
+    ],
+    [
+      "read",
+      "topology:*",
+      "allow"
+    ],
+    [
+      "read_pii",
+      "subscriber:S-88123",
+      "deny"
+    ],
+    [
+      "read_profile",
+      "subscriber:*",
+      "allow"
+    ],
+    [
+      "read_profile",
+      "subscriber:S-88123",
+      "allow"
+    ],
+    [
+      "read_status",
+      "cpe_device:CPE-5521",
+      "allow"
+    ]
+  ],
+  "expected_tools": [
+    "tool.blast_radius",
+    "tool.find_subscriber",
+    "tool.get_device_status",
+    "tool.search_procedures"
+  ]
+}

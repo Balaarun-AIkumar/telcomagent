@@ -1,0 +1,9 @@
+services:
+  permit-pdp:
+    image: permitio/pdp-v2:latest
+    ports:
+      - "127.0.0.1:7766:7000"
+    environment:
+      PDP_API_KEY: ${PERMIT_API_KEY:?Set PERMIT_API_KEY in .env first}
+      PDP_DEBUG: "True"
+    restart: unless-stopped

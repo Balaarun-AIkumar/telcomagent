@@ -1,0 +1,76 @@
+# Approved ontology mapping (Grounding -> Trust hand-off). classification drives:
+# canon view columns, text-to-SQL validator denylist, output/trace masking, Permit resource attributes.
+status_maps:
+  acct_sts_cd: {A: active, S: suspended, T: terminated, P: pending}
+  wo_sts_cd: {D: DISPATCHED, I: IN_PROGRESS, C: COMPLETED, X: CANCELLED}
+
+columns:
+  sub_mstr:
+    sbscr_id:     {meaning: subscriber id, ontology: "SID:Customer.id / TMF629 Customer.id", classification: internal}
+    acct_no:      {meaning: account number, ontology: "SID:CustomerAccount.id", classification: internal}
+    nm_txt:       {meaning: "name 'LAST, FIRST'", ontology: "SID:Individual.name", classification: pii}
+    svc_addr_1:   {meaning: service street address, ontology: "SID:GeographicAddress.street", classification: pii}
+    svc_addr_zip: {meaning: service zip, ontology: "SID:GeographicAddress.postcode", classification: internal}
+    ph_no:        {meaning: phone number, ontology: "SID:ContactMedium.phone", classification: pii}
+    acct_sts_cd:  {meaning: account status code, ontology: "TMF629 Customer.status", classification: internal}
+    crt_dt:       {meaning: "created date YYYYMMDD ('00000000' = unknown)", ontology: "SID:Customer.validFor.start", classification: internal}
+    flg_01:       {meaning: "overloaded: VIP or fraud hold", ontology: "SID:Customer.characteristic", classification: pii}
+  cpe_inv:
+    cpe_sn:    {meaning: CPE serial, ontology: "TMF639 PhysicalResource.serialNumber", classification: internal}
+    sbscr_ref: {meaning: "FK -> sub_mstr.sbscr_id (inferred)", ontology: "TMF639 relatedParty", classification: internal}
+    mdl_cd:    {meaning: CPE model, ontology: "TMF639 PhysicalResource.model", classification: internal}
+    fw_ver:    {meaning: firmware version, ontology: "TR-181 Device.DeviceInfo.SoftwareVersion", classification: internal}
+    ont_id:    {meaning: "FK -> ont_inv.ont_id", ontology: "TMF639 resourceRelationship", classification: internal}
+  wln_cfg:
+    cpe_sn:    {meaning: CPE serial, ontology: "TMF639 PhysicalResource.serialNumber", classification: internal}
+    radio_idx: {meaning: radio index, ontology: "TR-181 Device.WiFi.Radio.{i}", classification: internal}
+    ssid_txt:  {meaning: SSID, ontology: "TR-181 Device.WiFi.SSID.{i}.SSID", classification: internal}
+    psk_enc:   {meaning: Wi-Fi PSK (encrypted), ontology: "TR-181 Device.WiFi.AccessPoint.{i}.Security.KeyPassphrase", classification: secret}
+    upd_ts:    {meaning: last update, ontology: "", classification: internal}
+  ont_inv:
+    ont_id:      {meaning: ONT id, ontology: "TMF639 PhysicalResource(ONT)", classification: internal}
+    pon_port_id: {meaning: "FK -> pon_port", ontology: "TMF639 LogicalResource(PONPort)", classification: internal}
+    rx_pwr_dbm:  {meaning: optical rx power dBm, ontology: "TMF639 resourceCharacteristic", classification: internal}
+  wo_hdr:
+    wo_id:     {meaning: work order id, ontology: "TMF697 WorkOrder.id", classification: internal}
+    sbscr_ref: {meaning: "FK -> sub_mstr", ontology: "TMF697 relatedParty", classification: internal}
+    tech_id:   {meaning: assigned technician, ontology: "TMF697 relatedParty(technician)", classification: internal}
+    sts_cd:    {meaning: WO status code, ontology: "TMF697 WorkOrder.state", classification: internal}
+    tenant:    {meaning: tenant, ontology: "", classification: internal}
+
+canon_views:
+  canon_customer:
+    base: >-
+      SELECT *, ROW_NUMBER() OVER (PARTITION BY acct_no ORDER BY crt_dt DESC) AS _rn
+      FROM legacy.sub_mstr WHERE acct_sts_cd <> 'X'
+    where: "_rn = 1"
+    scope_col: sbscr_id
+    columns:
+      customer_id: {expr: sbscr_id, source: sub_mstr.sbscr_id}
+      account_id: {expr: acct_no, source: sub_mstr.acct_no}
+      status: {expr: "CASE acct_sts_cd WHEN 'A' THEN 'active' WHEN 'S' THEN 'suspended' WHEN 'T' THEN 'terminated' WHEN 'P' THEN 'pending' END", source: sub_mstr.acct_sts_cd}
+      created_on: {expr: "CASE WHEN crt_dt='00000000' THEN NULL ELSE substr(crt_dt,1,4)||'-'||substr(crt_dt,5,2)||'-'||substr(crt_dt,7,2) END", source: sub_mstr.crt_dt}
+      service_zip: {expr: svc_addr_zip, source: sub_mstr.svc_addr_zip}
+      name: {expr: nm_txt, source: sub_mstr.nm_txt}
+      service_address: {expr: svc_addr_1, source: sub_mstr.svc_addr_1}
+  canon_resource:
+    base: >-
+      SELECT c.*, s.svc_addr_zip, o.pon_port_id FROM legacy.cpe_inv c
+      JOIN legacy.sub_mstr s ON s.sbscr_id = c.sbscr_ref LEFT JOIN legacy.ont_inv o ON o.ont_id = c.ont_id
+    scope_col: sbscr_ref
+    columns:
+      cpe_sn: {expr: cpe_sn, source: cpe_inv.cpe_sn}
+      customer_id: {expr: sbscr_ref, source: cpe_inv.sbscr_ref}
+      model: {expr: mdl_cd, source: cpe_inv.mdl_cd}
+      firmware: {expr: fw_ver, source: cpe_inv.fw_ver}
+      ont_id: {expr: ont_id, source: cpe_inv.ont_id}
+      pon_port_id: {expr: pon_port_id, source: ont_inv.pon_port_id}
+  canon_work_order:
+    base: >-
+      SELECT w.*, s.svc_addr_zip FROM legacy.wo_hdr w JOIN legacy.sub_mstr s ON s.sbscr_id = w.sbscr_ref
+    scope_col: sbscr_ref
+    columns:
+      work_order_id: {expr: wo_id, source: wo_hdr.wo_id}
+      customer_id: {expr: sbscr_ref, source: wo_hdr.sbscr_ref}
+      state: {expr: "CASE sts_cd WHEN 'D' THEN 'DISPATCHED' WHEN 'I' THEN 'IN_PROGRESS' WHEN 'C' THEN 'COMPLETED' WHEN 'X' THEN 'CANCELLED' END", source: wo_hdr.sts_cd}
+      tenant: {expr: tenant, source: wo_hdr.tenant}

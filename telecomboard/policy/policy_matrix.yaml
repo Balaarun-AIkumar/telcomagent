@@ -1,0 +1,40 @@
+# Policy matrix: persona x action x context -> decision. CI gate: 100% match.
+# setup: optional operational events applied (then idg-sync) before the check.
+cases:
+  - {id: tech-reveal-assigned, user: maya, action: reveal_credential, resource: cpe_device:CPE-5521, expect: allow}
+  - {id: tech-reveal-unrelated, user: maya, action: reveal_credential, resource: cpe_device:CPE-4410, expect: deny}
+  - {id: tech-reveal-stale-stepup, user: maya, action: reveal_credential, resource: cpe_device:CPE-5521, context: {step_up_age_s: 900}, expect: deny}
+  - {id: tech-read-profile-assigned, user: maya, action: read_profile, resource: subscriber:S-88123, expect: allow}
+  - {id: tech-read-profile-unrelated, user: maya, action: read_profile, resource: subscriber:S-77001, expect: deny}
+  - {id: tech-reboot-assigned, user: maya, action: reboot, resource: cpe_device:CPE-5521, expect: allow}
+  - {id: tech-offshift-reveal, user: tech-off, action: reveal_credential, resource: cpe_device:CPE-5521, expect: deny}
+  - {id: csr-reveal, user: raj, action: reveal_credential, resource: cpe_device:CPE-5521, expect: deny}
+  - {id: csr-psk-reset, user: raj, action: trigger_psk_reset, resource: subscriber:S-88123, expect: allow}
+  - {id: csr-read-pii, user: raj, action: read_pii, resource: subscriber:S-88123, expect: allow}
+  - {id: ext-reveal, user: ext-t1, action: reveal_credential, resource: cpe_device:CPE-5521, expect: deny}
+  - {id: ext-read-pii, user: ext-t1, action: read_pii, resource: subscriber:S-88123, expect: deny}
+  - {id: ext-read-profile, user: ext-t1, action: read_profile, resource: subscriber:S-88123, expect: deny}
+  - {id: ext-psk-reset, user: ext-t1, action: trigger_psk_reset, resource: subscriber:S-88123, expect: deny}
+  - {id: ext-ticket-create, user: ext-t1, action: create, resource: ticket:*, expect: allow}
+  - {id: noc-device-status, user: priya, action: read_status, resource: cpe_device:CPE-5521, expect: allow}
+  - {id: noc-topology, user: priya, action: read, resource: topology:*, expect: allow}
+  - {id: noc-reveal, user: priya, action: reveal_credential, resource: cpe_device:CPE-5521, expect: deny}
+  - {id: noc-read-pii, user: priya, action: read_pii, resource: subscriber:S-88123, expect: deny}
+  - {id: noc-share-vendor, user: priya, action: share_with_vendor, resource: work_order:WO-95003, expect: allow}
+  - {id: contractor-reveal-assigned, user: sam, action: reveal_credential, resource: cpe_device:CPE-4410, expect: allow}
+  - {id: contractor-reveal-unrelated, user: sam, action: reveal_credential, resource: cpe_device:CPE-5521, expect: deny}
+  - {id: contractor-read-pii, user: sam, action: read_pii, resource: subscriber:S-77001, expect: deny}
+  - {id: contractor-topology, user: sam, action: read, resource: topology:*, expect: deny}
+  - {id: supervisor-reveal-no-bg, user: dana, action: reveal_credential, resource: cpe_device:CPE-5521, expect: deny}
+  - {id: supervisor-read-pii, user: dana, action: read_pii, resource: subscriber:S-88123, expect: allow}
+  - {id: doc-ext-internal, user: ext-t1, action: read, resource: document:*, attributes: {classification: internal}, expect: deny}
+  - {id: doc-ext-public, user: ext-t1, action: read, resource: document:*, attributes: {classification: public}, expect: allow}
+  - {id: doc-tech-restricted, user: maya, action: read, resource: document:*, attributes: {classification: restricted}, expect: deny}
+  - {id: doc-noc-restricted, user: priya, action: read, resource: document:*, attributes: {classification: restricted}, expect: allow}
+  - {id: doc-contractor-nda, user: sam, action: read, resource: document:*, attributes: {classification: vendor_nda}, expect: allow}
+  - {id: memory-tech-assigned, user: maya, action: read, resource: memory_episode:*, attributes: {subject_ref: "subscriber:S-88123"}, expect: allow}
+  - {id: memory-tech-unrelated, user: maya, action: read, resource: memory_episode:*, attributes: {subject_ref: "subscriber:S-77001"}, expect: deny}
+  # temporal: WO closed -> tuple removed -> deny (runs last; mutates state)
+  - {id: tech-reveal-wo-closed, user: maya, action: reveal_credential, resource: cpe_device:CPE-5521, setup: {close_wo: WO-1042}, expect: deny}
+  - {id: tech-read-profile-wo-closed, user: maya, action: read_profile, resource: subscriber:S-88123, expect: deny}
+  - {id: tech-reveal-wo-reopened, user: maya, action: reveal_credential, resource: cpe_device:CPE-5521, setup: {open_wo: WO-1042}, expect: allow}

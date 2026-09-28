@@ -1,0 +1,11 @@
+# Optional override: docker compose -f compose.yml -f compose.cloud.yml up --build -d
+# This passes secrets at runtime, never into the image. Keep .env ignored.
+services:
+  app:
+    build:
+      args:
+        EXTRAS: "[llm,otel,permit,neo4j]"
+    command: ["--demo", "serve", "gateway", "--host", "0.0.0.0", "--port", "8000"]
+    env_file: .env
+    environment:
+      PERMIT_PDP_URL: http://host.docker.internal:7766

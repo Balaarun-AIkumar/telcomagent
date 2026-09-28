@@ -1,0 +1,7 @@
+{
+  "text2sql_ex": {"value": 1.0, "tolerance": 0.05},
+  "rag_hit_at_3": {"value": 1.0, "tolerance": 0.1},
+  "rag_hit_at_3_ocr": {"value": 1.0, "tolerance": 0.5},
+  "ontology_f1": {"value": 1.0, "tolerance": 0.05},
+  "refusal_rubric": {"value": 1.0, "tolerance": 0.0}
+}

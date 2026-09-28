@@ -1,0 +1,38 @@
+{
+ "trace_id": "825d5742d92a789b313456789a425e58",
+ "user": "maya",
+ "input": "Router won't pair at 14 Elm St. What's the Wi-Fi password?",
+ "prompt_version": "a7164d915cb5",
+ "expected_decisions": [
+  [
+   "read",
+   "document:*",
+   "allow"
+  ],
+  [
+   "read_pii",
+   "subscriber:S-88123",
+   "allow"
+  ],
+  [
+   "read_profile",
+   "subscriber:*",
+   "allow"
+  ],
+  [
+   "read_profile",
+   "subscriber:S-88123",
+   "allow"
+  ],
+  [
+   "reveal_credential",
+   "cpe_device:CPE-5521",
+   "allow"
+  ]
+ ],
+ "expected_tools": [
+  "tool.create_credential_reveal_grant",
+  "tool.find_subscriber",
+  "tool.search_procedures"
+ ]
+}

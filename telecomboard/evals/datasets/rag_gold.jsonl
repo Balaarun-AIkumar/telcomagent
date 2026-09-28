@@ -1,0 +1,7 @@
+{"query": "router will not pair WPS", "model": "HGW-2400", "classes": ["public", "internal", "vendor_nda"], "expect": "DOC-MAN-HGW2400"}
+{"query": "ONT replacement procedure", "model": "HGW-2400", "classes": ["public", "internal"], "expect": "DOC-MOP-ONT-r2"}
+{"query": "reset wifi password account holder", "model": null, "classes": ["public", "internal"], "expect": "DOC-MOP-PSK-r1"}
+{"query": "PON port loss of signal reset", "model": null, "classes": ["public", "internal", "restricted"], "expect": "DOC-MOP-OLT-r1"}
+{"query": "fiber cut outage postmortem", "model": null, "classes": ["public", "internal"], "expect": "DOC-PM-2024-LOS"}
+{"query": "XR-500 setup WAN", "model": null, "classes": ["public"], "expect": "DOC-MAN-XR500"}
+{"query": "press WPS button select network on client", "model": "HGW-2400", "classes": ["public", "internal"], "expect": "DOC-MOP-WPS-SCAN"}

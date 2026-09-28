@@ -1,0 +1,10 @@
+# Compatibility entrypoint; prefer the root compose.yml.
+services:
+  app:
+    build:
+      context: ../..
+    ports: ["127.0.0.1:8000:8000"]
+    command: ["--offline", "--demo", "serve", "gateway", "--host", "0.0.0.0", "--port", "8000"]
+    volumes: ["demo-data:/data"]
+volumes:
+  demo-data:
